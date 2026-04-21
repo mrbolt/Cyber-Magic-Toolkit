@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Magic Toolkit</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<style>
+/* ===== RESET & BASE ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a2e;--bg4:#16213e;
+  --neon:#00ff88;--neon2:#00d4ff;--neon3:#ff00aa;--neon4:#ffaa00;
+  --text:#e0e0e0;--text2:#888;--border:#2a2a3e;
+  --font:'Courier New',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
+::selection{background:var(--neon);color:#000}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--neon);border-radius:3px}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:260px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);
+  position:fixed;left:0;top:0;bottom:0;overflow-y:auto;z-index:100;
+  transition:transform .3s ease;
+}
+.sidebar-header{
+  padding:20px;text-align:center;border-bottom:1px solid var(--border);
+}
+.sidebar-header h1{
+  font-size:1.1em;color:var(--neon);text-shadow:0 0 20px rgba(0,255,136,.5);
+  letter-spacing:2px;text-transform:uppercase;
+}
+.sidebar-header .subtitle{font-size:.7em;color:var(--neon2);margin-top:4px;letter-spacing:1px}
+.nav-section{padding:10px 0}
+.nav-section-title{
+  padding:8px 20px;font-size:.65em;text-transform:uppercase;letter-spacing:2px;
+  color:var(--neon3);font-weight:bold;
+}
+.nav-item{
+  display:flex;align-items:center;padding:10px 20px;cursor:pointer;
+  transition:all .2s;font-size:.85em;color:var(--text2);border-left:3px solid transparent;
+}
+.nav-item:hover{background:rgba(0,255,136,.05);color:var(--neon);border-left-color:var(--neon)}
+.nav-item.active{background:rgba(0,255,136,.1);color:var(--neon);border-left-color:var(--neon)}
+.nav-item .icon{margin-right:10px;font-size:1.1em;width:24px;text-align:center}
+
+/* ===== MAIN CONTENT ===== */
+.main{margin-left:260px;flex:1;min-height:100vh;padding:0}
+.tool-view{display:none;padding:30px;max-width:1000px;margin:0 auto;animation:fadeIn .3s ease}
+.tool-view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== HERO / HOME ===== */
+.hero{text-align:center;padding:60px 30px}
+.hero h2{font-size:2.2em;color:var(--neon);text-shadow:0 0 30px rgba(0,255,136,.4);margin-bottom:15px}
+.hero p{color:var(--text2);max-width:600px;margin:0 auto 30px;line-height:1.7;font-size:.95em}
+.hero-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;max-width:800px;margin:0 auto}
+.hero-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:25px;
+  cursor:pointer;transition:all .3s;
+}
+.hero-card:hover{border-color:var(--neon);transform:translateY(-3px);box-shadow:0 5px 30px rgba(0,255,136,.15)}
+.hero-card .hc-icon{font-size:2em;margin-bottom:10px}
+.hero-card h3{color:var(--neon);font-size:.95em;margin-bottom:8px}
+.hero-card p{font-size:.75em;color:var(--text2);line-height:1.5}
+
+/* ===== TOOL HEADER ===== */
+.tool-header{margin-bottom:25px}
+.tool-header h2{color:var(--neon);font-size:1.5em;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.tool-header .breadcrumb{font-size:.75em;color:var(--text2)}
+
+/* ===== ELI5 BOX ===== */
+.eli5-box{
+  background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(255,0,170,.05));
+  border:1px solid rgba(0,212,255,.25);border-radius:10px;padding:18px 20px;margin-bottom:25px;
+  position:relative;overflow:hidden;
+}
+.eli5-box::before{content:'💡';position:absolute;top:10px;right:15px;font-size:1.3em;opacity:.6}
+.eli5-box .eli5-title{color:var(--neon2);font-size:.8em;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.eli5-box p{font-size:.85em;line-height:1.7;color:var(--text)}
+.eli5-box .eli5-extra{margin-top:10px;font-size:.78em;color:var(--text2);font-style:italic}
+
+/* ===== TOOL CONTROLS ===== */
+.tool-controls{
+  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;align-items:center;
+}
+.tool-controls label{font-size:.8em;color:var(--text2)}
+.tool-controls select,.tool-controls input[type="text"],.tool-controls input[type="number"]{
+  background:var(--bg3);color:var(--neon);border:1px solid var(--border);
+  padding:8px 12px;border-radius:6px;font-family:var(--font);font-size:.85em;
+}
+.tool-controls select:focus,.tool-controls input:focus{outline:none;border-color:var(--neon)}
+.btn{
+  padding:10px 20px;border:1px solid var(--neon);background:transparent;color:var(--neon);
+  border-radius:6px;cursor:pointer;font-family:var(--font);font-size:.85em;
+  transition:all .2s;text-transform:uppercase;letter-spacing:1px;
+}
+.btn:hover{background:var(--neon);color:#000;box-shadow:0 0 20px rgba(0,255,136,.3)}
+.btn-secondary{border-color:var(--neon2);color:var(--neon2)}
+.btn-secondary:hover{background:var(--neon2);color:#000;box-shadow:0 0 20px rgba(0,212,255,.3)}
+.btn-accent{border-color:var(--neon3);color:var(--neon3)}
+.btn-accent:hover{background:var(--neon3);color:#000;box-shadow:0 0 20px rgba(255,0,170,.3)}
+.btn-sm{padding:6px 14px;font-size:.75em}
+.swap-btn{
+  background:none;border:1px solid var(--neon4);color:var(--neon4);border-radius:50%;
+  width:36px;height:36px;cursor:pointer;font-size:1.1em;display:flex;align-items:center;
+  justify-content:center;transition:all .2s;
+}
+.swap-btn:hover{background:var(--neon4);color:#000}
+
+/* ===== IO AREAS ===== */
+.io-container{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.io-container.single{grid-template-columns:1fr}
+.io-box{position:relative}
+.io-box label{display:block;font-size:.75em;color:var(--neon2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.io-box textarea{
+  width:100%;height:180px;background:var(--bg3);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;padding:14px;font-family:var(--font);font-size:.9em;resize:vertical;line-height:1.6;
+}
+.io-box textarea:focus{outline:none;border-color:var(--neon);box-shadow:0 0 10px rgba(0,255,136,.1)}
+.io-box .copy-btn{
+  position:absolute;top:28px;right:8px;background:var(--bg);border:1px solid var(--border);
+  color:var(--text2);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:.7em;
+  font-family:var(--font);transition:all .2s;
+}
+.io-box .copy-btn:hover{border-color:var(--neon);color:var(--neon)}
+
+/* ===== FILE AREAS ===== */
+.file-drop{
+  border:2px dashed var(--border);border-radius:10px;padding:40px;text-align:center;
+  cursor:pointer;transition:all .3s;margin-bottom:20px;
+}
+.file-drop:hover,.file-drop.dragover{border-color:var(--neon);background:rgba(0,255,136,.03)}
+.file-drop .fd-icon{font-size:2.5em;margin-bottom:10px;opacity:.5}
+.file-drop p{color:var(--text2);font-size:.85em}
+.file-drop input{display:none}
+
+/* ===== RESULT DISPLAY ===== */
+.result-box{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:15px;
+  margin-top:15px;min-height:80px;word-wrap:break-word;font-size:.9em;line-height:1.6;
+}
+.result-box.success{border-color:var(--neon)}
+.result-box.error{border-color:#ff4444;color:#ff6666}
+
+/* ===== TABLE ===== */
+.data-table{width:100%;border-collapse:collapse;margin-top:15px;font-size:.85em}
+.data-table th{background:var(--bg4);color:var(--neon2);text-align:left;padding:10px;border:1px solid var(--border)}
+.data-table td{padding:8px 10px;border:1px solid var(--border);word-break:break-all}
+.data-table tr:nth-child(even){background:rgba(255,255,255,.02)}
+
+/* ===== IMAGE PREVIEW ===== */
+.image-preview{max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--border);margin:10px 0}
+.canvas-container{margin:15px 0}
+.canvas-container canvas{max-width:100%;border:1px solid var(--border);border-radius:8px}
+
+/* ===== TABS ===== */
+.tab-bar{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.tab-btn{
+  padding:10px 20px;background:none;border:none;color:var(--text2);cursor:pointer;
+  font-family:var(--font);font-size:.8em;border-bottom:2px solid transparent;transition:all .2s;
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--neon);border-bottom-color:var(--neon)}
+
+/* ===== MOBILE ===== */
+.menu-toggle{
+  display:none;position:fixed;top:10px;left:10px;z-index:200;
+  background:var(--bg2);border:1px solid var(--border);color:var(--neon);
+  padding:8px 12px;border-radius:6px;cursor:pointer;font-size:1.2em;
+}
+@media(max-width:768px){
+  .menu-toggle{display:block}
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .io-container{grid-template-columns:1fr}
+  .hero-cards{grid-template-columns:1fr}
+}
+
+/* ===== HEXDUMP ===== */
+.hexdump{
+  font-family:'Courier New',monospace;font-size:.78em;background:var(--bg);
+  padding:15px;border-radius:8px;overflow-x:auto;white-space:pre;line-height:1.8;
+  border:1px solid var(--border);max-height:400px;overflow-y:auto;
+}
+.hexdump .offset{color:var(--neon2)}
+.hexdump .hex{color:var(--neon)}
+.hexdump .ascii{color:var(--neon3)}
+
+/* ===== PROGRESS ===== */
+.progress-bar{width:100%;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;margin:10px 0}
+.progress-bar .fill{height:100%;background:var(--neon);transition:width .3s;width:0}
+
+/* ===== MISC ===== */
+.status-msg{font-size:.8em;color:var(--neon4);margin-top:8px}
+.tag{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.7em;margin:2px}
+.tag-green{background:rgba(0,255,136,.15);color:var(--neon)}
+.tag-blue{background:rgba(0,212,255,.15);color:var(--neon2)}
+.tag-pink{background:rgba(255,0,170,.15);color:var(--neon3)}
+</style>
+</head>
+<body>
+<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h1>⚡ Cyber Magic</h1>
+    <div class="subtitle">Toolkit for Learners</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Home</div>
+    <div class="nav-item active" onclick="showView('home')"><span class="icon">🏠</span> Dashboard</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Encoding / Decoding</div>
+    <div class="nav-item" onclick="showView('base64')"><span class="icon">🔤</span> Base64</div>
+    <div class="nav-item" onclick="showView('hex')"><span class="icon">🔢</span> Hexadecimal</div>
+    <div class="nav-item" onclick="showView('url')"><span class="icon">🌐</span> URL Encoding</div>
+    <div class="nav-item" onclick="showView('binary')"><span class="icon">💻</span> Binary</div>
+    <div class="nav-item" onclick="showView('rot13')"><span class="icon">🔄</span> ROT13</div>
+    <div class="nav-item" onclick="showView('ascii')"><span class="icon">📊</span> ASCII</div>
+    <div class="nav-item" onclick="showView('morse')"><span class="icon">📡</span> Morse Code</div>
+    <div class="nav-item" onclick="showView('htmlent')"><span class="icon">📝</span> HTML Entities</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Encryption / Decryption</div>
+    <div class="nav-item" onclick="showView('caesar')"><span class="icon">🏛️</span> Caesar Cipher</div>
+    <div class="nav-item" onclick="showView('vigenere')"><span class="icon">🔑</span> Vigenère Cipher</div>
+    <div class="nav-item" onclick="showView('aes')"><span class="icon">🛡️</span> AES</div>
+    <div class="nav-item" onclick="showView('xor')"><span class="icon">⊕</span> XOR Cipher</div>
+    <div class="nav-item" onclick="showView('railfence')"><span class="icon">🚂</span> Rail Fence</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Steganography</div>
+    <div class="nav-item" onclick="showView('steg-lsb')"><span class="icon">🖼️</span> Image LSB</div>
+    <div class="nav-item" onclick="showView('steg-text')"><span class="icon">👻</span> Text Stego</div>
+    <div class="nav-item" onclick="showView('exif')"><span class="icon">📸</span> EXIF / Metadata</div>
+    <div class="nav-item" onclick="showView('fileheader')"><span class="icon">🔍</span> File Header</div>
+  </div>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+
+<!-- HOME -->
+<div class="tool-view active" id="view-home">
+  <div class="hero">
+    <h2>⚡ Cyber Magic Toolkit</h2>
+    <p>Your all-in-one playground for learning cybersecurity. Encode, decode, encrypt, decrypt, and uncover hidden secrets — all in your browser. Perfect for CTF challenges!</p>
+    <div class="hero-cards">
+      <div class="hero-card" onclick="showView('base64')">
+        <div class="hc-icon">🔤</div>
+        <h3>Encoding & Decoding</h3>
+        <p>Base64, Hex, Binary, URL, ROT13, Morse, ASCII, HTML Entities</p>
+      </div>
+      <div class="hero-card" onclick="showView('caesar')">
+        <div class="hc-icon">🔐</div>
+        <h3>Encryption & Decryption</h3>
+        <p>Caesar, Vigenère, AES, XOR, Rail Fence ciphers</p>
+      </div>
+      <div class="hero-card" onclick="showView('steg-lsb')">
+        <div class="hc-icon">🖼️</div>
+        <h3>Steganography</h3>
+        <p>Hide & find secrets in images and text</p>
+      </div>
+      <div class="hero-card" onclick="showView('exif')">
+        <div class="hc-icon">🔍</div>
+        <h3>Forensics</h3>
+        <p>EXIF metadata, file headers, hex dumps</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BASE64 ===== -->
+<div class="tool-view" id="view-base64">
+  <div class="tool-header">
+    <div class="breadcrumb">Encoding / Decoding</div>
+    <h2>🔤 Base64</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Imagine you have a secret toy, but you can only send letters to your friend. Base64 is like turning your toy into a description using only letters (A-Z, a-z), numbers (0-9), and two special characters (+ and /). Your friend reads the letters and rebuilds the toy! Computers use Base64 to send things like images through text-only channels (like email).</p>
+    <div class="eli5-extra">Base64 is NOT encryption — anyone can decode it. It's just a way of representing data in a text-safe format. Every 3 bytes of data becomes 4 Base64 characters.</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input (Plain Text)</label>
+      <textarea id="b64-input" placeholder="Type or paste text here..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (Base64)</label>
+      <textarea id="b64-output" placeholder="Result will appear here..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('b64-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <button class="btn" onclick="b64Encode()">Encode →</button>
+    <button class="swap-btn" onclick="swapFields('b64-input','b64-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="b64Decode()">← Decode</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('b64-input','b64-output')">Clear</button>
+  </div>
+</div>
+
+<!-- ===== HEX ===== -->
+<div class="tool-view" id="view-hex">
+  <div class="tool-header">
+    <div class="breadcrumb">Encoding / Decoding</div>
+    <h2>🔢 Hexadecimal</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>You know how we count with 10 fingers (0–9)? Hexadecimal counts with 16 "fingers" — it uses 0–9 AND the letters A–F. So after 9, instead of 10, we say A, then B, C, D, E, F, and THEN 10! Computers love hex because each hex digit represents exactly 4 bits, making it a neat shorthand for binary.</p>
+    <div class="eli5-extra">Hex is often used in CTFs to represent memory addresses, color codes (#FF00AA), and raw data. Look for "0x" prefix — that usually means hex!</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input (Plain Text)</label>
+      <textarea id="hex-input" placeholder="Type text here..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (Hex)</label>
+      <textarea id="hex-output" placeholder="Hex result..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('hex-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <button class="btn" onclick="hexEncode()">Encode →</button>
+    <button class="swap-btn" onclick="swapFields('hex-input','hex-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="hexDecode()">← Decode</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('hex-input','hex-output')">Clear</button>
+    <label><input type="checkbox" id="hex-space" checked> Space between bytes</label>
+  </div>
+</div>
+
+<!-- ===== URL ENCODING ===== -->
+<div class="tool-view" id="view-url">
+  <div class="tool-header">
+    <div class="breadcrumb">Encoding / Decoding</div>
+    <h2>🌐 URL Encoding</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Web addresses (URLs) can only use certain characters. If you want to put a space or special symbol in a URL, you replace it with a percent sign (%) followed by a number. For example, a space becomes %20. It's like giving every special character a secret code name so the internet can understand it!</p>
+    <div class="eli5-extra">URL encoding (also called "percent encoding") is common in web CTF challenges. Watch for double-encoding tricks where %25 = % itself!</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input (Plain Text)</label>
+      <textarea id="url-input" placeholder="Type text with special characters..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (URL Encoded)</label>
+      <textarea id="url-output" placeholder="Encoded URL..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('url-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <button class="btn" onclick="urlEncode()">Encode →</button>
+    <button class="swap-btn" onclick="swapFields('url-input','url-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="urlDecode()">← Decode</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('url-input','url-output')">Clear</button>
+  </div>
+</div>
+
+<!-- ===== BINARY ===== -->
+<div class="tool-view" id="view-binary">
+  <div class="tool-header">
+    <div class="breadcrumb">Encoding / Decoding</div>
+    <h2>💻 Binary</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Computers only understand two things: ON and OFF — like a light switch! We write ON as 1 and OFF as 0. Every letter, number, and emoji you see is secretly made of 1s and 0s inside the computer. The letter 'A' is 01000001 in binary — that's 8 switches in a row!</p>
+    <div class="eli5-extra">Each 0 or 1 is called a "bit." Eight bits make a "byte." Every character you type is usually 1 byte (8 bits) in ASCII. In CTFs, you might get a message as a long string of 1s and 0s!</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input (Plain Text)</label>
+      <textarea id="bin-input" placeholder="Type text here..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (Binary)</label>
+      <textarea id="bin-output" placeholder="Binary result..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('bin-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <button class="btn" onclick="binEncode()">Encode →</button>
+    <button class="swap-btn" onclick="swapFields('bin-input','bin-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="binDecode()">← Decode</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('bin-input','bin-output')">Clear</button>
+  </div>
+</div>
+
+<!-- ===== ROT13 ===== -->
+<div class="tool-view" id="view-rot13">
+  <div class="tool-header">
+    <div class="breadcrumb">Encoding / Decoding</div>
+    <h2>🔄 ROT13</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Imagine the alphabet written in a circle. ROT13 means "rotate by 13 places." Every letter gets replaced by the letter 13 spots ahead. Since there are 26 letters, doing ROT13 twice gets you back to the original! A→N, B→O, C→P... It's like a secret decoder ring!</p>
+    <div class="eli5-extra">ROT13 is its own inverse — encoding and decoding use the exact same operation! It's super common in CTFs as a first layer of obfuscation. Numbers and special characters stay the same.</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input</label>
+      <textarea id="rot13-input" placeholder="Type text here..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (ROT13)</label>
+      <textarea id="rot13-output" placeholder="ROT13 result..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('rot13-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <button class="btn" onclick="rot13Apply()">Apply ROT13 ⇄</button>
+    <button class="swap-btn" onclick="swapFields('rot13-input','rot13-output')">⇄</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('rot13-input','rot13-output')">Clear</button>
+    <label>Custom rotation: <input type="number" id="rot-n" value="13" min="1" max="25" style="width:60px"></label>
+    <button class="btn btn-sm btn-secondary" onclick="rotNApply()">Apply ROT-N</button>
+  </div>
+</div>
+
+<!-- ===== ASCII ===== -->
+<div class="tool-view" id="view-ascii">
+  <div class="tool-header">
+    <div class="breadcrumb">Encoding / Decoding</div>
+    <h2>📊 ASCII</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Computers don't understand letters — they only understand numbers! So humans made a table where every letter gets a number. 'A' = 65, 'B' = 66, 'a' = 97, '0' = 48, space = 32. This table is called ASCII. When you press a key, the computer actually sees a number!</p>
+    <div class="eli5-extra">ASCII stands for "American Standard Code for Information Interchange." It defines 128 characters (0–127). In CTFs, you'll often need to convert between decimal numbers and text characters.</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input (Plain Text)</label>
+      <textarea id="ascii-input" placeholder="Type text here..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (ASCII Codes)</label>
+      <textarea id="ascii-output" placeholder="ASCII codes..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('ascii-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <button class="btn" onclick="asciiEncode()">Text → Numbers</button>
+    <button class="swap-btn" onclick="swapFields('ascii-input','ascii-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="asciiDecode()">Numbers → Text</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('ascii-input','ascii-output')">Clear</button>
+    <select id="ascii-sep">
+      <option value=" ">Space separated</option>
+      <option value=",">Comma separated</option>
+      <option value="\n">One per line</option>
+    </select>
+  </div>
+</div>
+
+<!-- ===== MORSE CODE ===== -->
+<div class="tool-view" id="view-morse">
+  <div class="tool-header">
+    <div class="breadcrumb">Encoding / Decoding</div>
+    <h2>📡 Morse Code</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Imagine you can only make two sounds — a short beep (dot: .) and a long beep (dash: -). Morse Code turns every letter into a pattern of dots and dashes. 'S' is three short beeps (. . .) and 'O' is three long beeps (- - -). That's how "SOS" became the famous distress signal!</p>
+    <div class="eli5-extra">Morse Code was invented in the 1830s for telegraphs. In CTFs, you might find messages hidden as dots and dashes, or even as short/long flashes of light or sound beeps!</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input (Plain Text)</label>
+      <textarea id="morse-input" placeholder="Type text here..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (Morse Code)</label>
+      <textarea id="morse-output" placeholder="Morse code..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('morse-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <button class="btn" onclick="morseEncode()">Encode →</button>
+    <button class="swap-btn" onclick="swapFields('morse-input','morse-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="morseDecode()">← Decode</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('morse-input','morse-output')">Clear</button>
+  </div>
+</div>
+
+<!-- ===== HTML ENTITIES ===== -->
+<div class="tool-view" id="view-htmlent">
+  <div class="tool-header">
+    <div class="breadcrumb">Encoding / Decoding</div>
+    <h2>📝 HTML Entities</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>In web pages, some characters are special — like &lt; and &gt; which tell the browser "this is code!" If you want to actually SHOW a &lt; symbol on the page, you write &amp;lt; instead. It's like saying "I mean the actual character, not a command!" These special codes are called HTML entities.</p>
+    <div class="eli5-extra">HTML entities are crucial in web security! XSS (Cross-Site Scripting) attacks happen when special characters aren't properly encoded. CTFs often involve encoding/decoding HTML entities to find hidden payloads.</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input (Plain Text)</label>
+      <textarea id="htmlent-input" placeholder='Try: <script>alert("hello")</script>'></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (HTML Entities)</label>
+      <textarea id="htmlent-output" placeholder="Encoded entities..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('htmlent-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <button class="btn" onclick="htmlentEncode()">Encode →</button>
+    <button class="swap-btn" onclick="swapFields('htmlent-input','htmlent-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="htmlentDecode()">← Decode</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('htmlent-input','htmlent-output')">Clear</button>
+  </div>
+</div>
+
+<!-- ===== CAESAR CIPHER ===== -->
+<div class="tool-view" id="view-caesar">
+  <div class="tool-header">
+    <div class="breadcrumb">Encryption / Decryption</div>
+    <h2>🏛️ Caesar Cipher</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Julius Caesar (the famous Roman emperor) used this trick to send secret messages to his generals! He shifted every letter by 3 places: A→D, B→E, C→F. So "HELLO" becomes "KHOOR." If you know the shift number (the "key"), you can shift back to read the message. It's like a secret decoder ring from a cereal box!</p>
+    <div class="eli5-extra">The Caesar Cipher is a "substitution cipher" — each letter is substituted for another. It's easy to break because there are only 25 possible shifts! Try the "Brute Force" button to see all possibilities at once.</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input</label>
+      <textarea id="caesar-input" placeholder="Enter message..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output</label>
+      <textarea id="caesar-output" placeholder="Result..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('caesar-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <label>Shift: <input type="number" id="caesar-shift" value="3" min="1" max="25" style="width:60px"></label>
+    <button class="btn" onclick="caesarEncrypt()">Encrypt →</button>
+    <button class="swap-btn" onclick="swapFields('caesar-input','caesar-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="caesarDecrypt()">← Decrypt</button>
+    <button class="btn btn-accent" onclick="caesarBrute()">Brute Force All 25</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('caesar-input','caesar-output');document.getElementById('caesar-brute-results').innerHTML=''">Clear</button>
+  </div>
+  <div id="caesar-brute-results" class="result-box" style="display:none;max-height:400px;overflow-y:auto"></div>
+</div>
+
+<!-- ===== VIGENERE CIPHER ===== -->
+<div class="tool-view" id="view-vigenere">
+  <div class="tool-header">
+    <div class="breadcrumb">Encryption / Decryption</div>
+    <h2>🔑 Vigenère Cipher</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Caesar Cipher uses ONE shift for all letters, which makes it easy to crack. Vigenère is smarter — it uses a SECRET WORD as the key! Each letter of the key tells you how much to shift. If your key is "CAT," the first letter shifts by C(2), second by A(0), third by T(19), then it repeats: C, A, T, C, A, T... It's like having a different decoder ring for each letter!</p>
+    <div class="eli5-extra">The Vigenère cipher was considered "unbreakable" for 300 years until Friedrich Kasiski cracked it in 1863. The trick? Look for repeating patterns in the ciphertext to figure out the key length.</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input</label>
+      <textarea id="vig-input" placeholder="Enter message..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output</label>
+      <textarea id="vig-output" placeholder="Result..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('vig-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <label>Key: <input type="text" id="vig-key" placeholder="SECRET" style="width:140px"></label>
+    <button class="btn" onclick="vigEncrypt()">Encrypt →</button>
+    <button class="swap-btn" onclick="swapFields('vig-input','vig-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="vigDecrypt()">← Decrypt</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('vig-input','vig-output')">Clear</button>
+  </div>
+</div>
+
+<!-- ===== AES ===== -->
+<div class="tool-view" id="view-aes">
+  <div class="tool-header">
+    <div class="breadcrumb">Encryption / Decryption</div>
+    <h2>🛡️ AES Encryption</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>AES is like putting your message in an ULTRA-STRONG safe with a password. You put your secret message in, lock it with a password, and out comes total gibberish. Only someone with the EXACT same password can unlock it. AES is so strong that even the world's fastest computers can't crack it — governments and banks use it every day to protect secrets!</p>
+    <div class="eli5-extra">AES (Advanced Encryption Standard) is "symmetric" encryption — the same key encrypts AND decrypts. It works in "rounds" — scrambling data 10-14 times with math operations. It's the gold standard of modern encryption (used in HTTPS, WiFi, file encryption).</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input (Plain Text)</label>
+      <textarea id="aes-input" placeholder="Enter secret message..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output (Encrypted)</label>
+      <textarea id="aes-output" placeholder="Encrypted result..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('aes-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <label>Password: <input type="text" id="aes-key" placeholder="Enter password" style="width:180px"></label>
+    <button class="btn" onclick="aesEncrypt()">Encrypt →</button>
+    <button class="swap-btn" onclick="swapFields('aes-input','aes-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="aesDecrypt()">← Decrypt</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('aes-input','aes-output')">Clear</button>
+  </div>
+</div>
+
+<!-- ===== XOR CIPHER ===== -->
+<div class="tool-view" id="view-xor">
+  <div class="tool-header">
+    <div class="breadcrumb">Encryption / Decryption</div>
+    <h2>⊕ XOR Cipher</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>XOR is a simple rule: "Are these two things DIFFERENT?" If yes → 1, if no → 0. Imagine two light switches — if they're both up or both down, the light is OFF (0). If one is up and one is down, the light is ON (1). To encrypt, you XOR your message with a key. The magic? XOR it with the same key again, and you get the original message back!</p>
+    <div class="eli5-extra">XOR is EXTREMELY common in CTFs! Many real-world encryption algorithms (including AES) use XOR as a building block. Single-byte XOR is easy to crack with frequency analysis, but repeated-key XOR with a long key can be tough.</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input</label>
+      <textarea id="xor-input" placeholder="Enter message or hex data..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output</label>
+      <textarea id="xor-output" placeholder="XOR result..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('xor-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <label>Key: <input type="text" id="xor-key" placeholder="Key text" style="width:140px"></label>
+    <select id="xor-mode">
+      <option value="text">Text mode</option>
+      <option value="hex">Hex mode</option>
+    </select>
+    <button class="btn" onclick="xorApply()">Apply XOR ⇄</button>
+    <button class="btn btn-accent" onclick="xorBrute()">Brute Force (1 byte)</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('xor-input','xor-output');document.getElementById('xor-brute-results').innerHTML=''">Clear</button>
+  </div>
+  <div id="xor-brute-results" class="result-box" style="display:none;max-height:400px;overflow-y:auto"></div>
+</div>
+
+<!-- ===== RAIL FENCE ===== -->
+<div class="tool-view" id="view-railfence">
+  <div class="tool-header">
+    <div class="breadcrumb">Encryption / Decryption</div>
+    <h2>🚂 Rail Fence Cipher</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Imagine writing your message in a zigzag pattern, like a roller coaster going up and down across several rows (rails). "HELLO WORLD" with 3 rails looks like a zigzag: H goes on top, E goes middle, L goes bottom, L goes middle, O goes top... Then you read each rail left to right! The letters get all mixed up, but they're all still there — just scrambled!</p>
+    <div class="eli5-extra">The Rail Fence is a "transposition cipher" — it doesn't change letters, just rearranges them. It's different from Caesar/Vigenère which are "substitution ciphers." In CTFs, try different numbers of rails (2-10) to crack it!</div>
+  </div>
+  <div class="io-container">
+    <div class="io-box">
+      <label>Input</label>
+      <textarea id="rail-input" placeholder="Enter message..."></textarea>
+    </div>
+    <div class="io-box">
+      <label>Output</label>
+      <textarea id="rail-output" placeholder="Result..." readonly></textarea>
+      <button class="copy-btn" onclick="copyText('rail-output')">Copy</button>
+    </div>
+  </div>
+  <div class="tool-controls">
+    <label>Rails: <input type="number" id="rail-count" value="3" min="2" max="20" style="width:60px"></label>
+    <button class="btn" onclick="railEncrypt()">Encrypt →</button>
+    <button class="swap-btn" onclick="swapFields('rail-input','rail-output')">⇄</button>
+    <button class="btn btn-secondary" onclick="railDecrypt()">← Decrypt</button>
+    <button class="btn btn-accent btn-sm" onclick="clearFields('rail-input','rail-output')">Clear</button>
+  </div>
+  <div id="rail-visual" class="result-box" style="display:none"></div>
+</div>
+
+<!-- ===== IMAGE LSB STEGANOGRAPHY ===== -->
+<div class="tool-view" id="view-steg-lsb">
+  <div class="tool-header">
+    <div class="breadcrumb">Steganography</div>
+    <h2>🖼️ Image LSB Steganography</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Every pixel in an image has a color made of Red, Green, and Blue numbers (0-255). The LAST bit of each number is so tiny, changing it doesn't change how the picture looks to your eyes! So we can secretly swap those tiny bits with our secret message bits. The image looks exactly the same, but hidden inside is a secret! It's like whispering a secret so quietly that nobody can hear it, but your friend with super hearing can!</p>
+    <div class="eli5-extra">LSB = "Least Significant Bit." Each color channel (R,G,B) has 8 bits, and we modify only the last one. This means each pixel can hide 3 bits of data (one per channel). For a 1000x1000 image, that's ~375KB of hidden data! Tools like "stegsolve" and "zsteg" are popular in CTFs.</div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showStegTab('hide')">Hide Message</button>
+    <button class="tab-btn" onclick="showStegTab('extract')">Extract Message</button>
+  </div>
+  <div id="steg-hide-tab">
+    <div class="file-drop" id="steg-hide-drop" onclick="document.getElementById('steg-hide-file').click()">
+      <div class="fd-icon">🖼️</div>
+      <p>Drop an image here or click to upload (PNG recommended)</p>
+      <input type="file" id="steg-hide-file" accept="image/*">
+    </div>
+    <img id="steg-hide-preview" class="image-preview" style="display:none">
+    <div class="io-container single">
+      <div class="io-box">
+        <label>Secret Message to Hide</label>
+        <textarea id="steg-hide-msg" placeholder="Type your secret message here..."></textarea>
+      </div>
+    </div>
+    <div class="tool-controls">
+      <button class="btn" onclick="stegHide()">Hide Message in Image</button>
+      <span id="steg-hide-status" class="status-msg"></span>
+    </div>
+    <div class="canvas-container"><canvas id="steg-hide-canvas" style="display:none"></canvas></div>
+    <div class="tool-controls" id="steg-download-area" style="display:none">
+      <button class="btn btn-secondary" onclick="stegDownload()">Download Image with Secret</button>
+    </div>
+  </div>
+  <div id="steg-extract-tab" style="display:none">
+    <div class="file-drop" id="steg-extract-drop" onclick="document.getElementById('steg-extract-file').click()">
+      <div class="fd-icon">🔍</div>
+      <p>Drop an image to extract hidden message</p>
+      <input type="file" id="steg-extract-file" accept="image/*">
+    </div>
+    <img id="steg-extract-preview" class="image-preview" style="display:none">
+    <div class="tool-controls">
+      <button class="btn btn-secondary" onclick="stegExtract()">Extract Hidden Message</button>
+    </div>
+    <div id="steg-extract-result" class="result-box" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ===== TEXT STEGANOGRAPHY ===== -->
+<div class="tool-view" id="view-steg-text">
+  <div class="tool-header">
+    <div class="breadcrumb">Steganography</div>
+    <h2>👻 Text Steganography</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Imagine writing an invisible message between the words of a normal letter! Text steganography hides secret messages inside regular text using invisible characters. These "zero-width" characters are like invisible ink — you can't see them, but the computer can read them! The text looks perfectly normal, but there's a hidden message riding along!</p>
+    <div class="eli5-extra">Zero-width characters (ZWC) include: Zero-Width Space (U+200B), Zero-Width Non-Joiner (U+200C), and Zero-Width Joiner (U+200D). Each secret bit is encoded as one of these invisible characters. They're often found in CTF challenges hidden in seemingly normal text!</div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTextStegTab('hide')">Hide Message</button>
+    <button class="tab-btn" onclick="showTextStegTab('extract')">Extract Message</button>
+  </div>
+  <div id="textsteg-hide-tab">
+    <div class="io-container">
+      <div class="io-box">
+        <label>Cover Text (The visible message)</label>
+        <textarea id="ts-cover" placeholder="Type the normal-looking text..."></textarea>
+      </div>
+      <div class="io-box">
+        <label>Secret Message to Hide</label>
+        <textarea id="ts-secret" placeholder="Type your secret..."></textarea>
+      </div>
+    </div>
+    <div class="tool-controls">
+      <button class="btn" onclick="textStegHide()">Hide Secret in Text</button>
+    </div>
+    <div class="io-container single">
+      <div class="io-box">
+        <label>Result (looks normal, but contains hidden message!)</label>
+        <textarea id="ts-result" placeholder="Result..." readonly></textarea>
+        <button class="copy-btn" onclick="copyText('ts-result')">Copy</button>
+      </div>
+    </div>
+  </div>
+  <div id="textsteg-extract-tab" style="display:none">
+    <div class="io-container single">
+      <div class="io-box">
+        <label>Paste Text with Hidden Message</label>
+        <textarea id="ts-extract-input" placeholder="Paste suspicious text here..."></textarea>
+      </div>
+    </div>
+    <div class="tool-controls">
+      <button class="btn btn-secondary" onclick="textStegExtract()">Extract Hidden Message</button>
+      <button class="btn btn-accent btn-sm" onclick="textStegDetect()">Detect Hidden Characters</button>
+    </div>
+    <div id="ts-extract-result" class="result-box" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ===== EXIF / METADATA ===== -->
+<div class="tool-view" id="view-exif">
+  <div class="tool-header">
+    <div class="breadcrumb">Steganography / Forensics</div>
+    <h2>📸 EXIF / Metadata Viewer</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>When you take a photo with a camera or phone, it secretly writes extra information INTO the picture file — like a hidden diary! This "metadata" can include when the photo was taken, what camera was used, and even WHERE you were standing (GPS coordinates)! EXIF is the name for this hidden diary. In CTFs, secrets are often hidden in this metadata!</p>
+    <div class="eli5-extra">EXIF = "Exchangeable Image File Format." Metadata can contain: camera model, date/time, GPS coordinates, software used, comments, copyright info, and custom fields. CTF flags are often hidden in "Comment," "Artist," or "UserComment" fields. Tools like "exiftool" are essential for forensics!</div>
+  </div>
+  <div class="file-drop" id="exif-drop" onclick="document.getElementById('exif-file').click()">
+    <div class="fd-icon">📸</div>
+    <p>Drop an image file here or click to upload</p>
+    <input type="file" id="exif-file" accept="image/*">
+  </div>
+  <img id="exif-preview" class="image-preview" style="display:none">
+  <div class="tool-controls">
+    <button class="btn btn-secondary" onclick="readExif()">Read Metadata</button>
+  </div>
+  <div id="exif-results" style="display:none">
+    <h3 style="color:var(--neon2);margin:15px 0 10px;font-size:.95em">Image Metadata</h3>
+    <table class="data-table" id="exif-table">
+      <thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== FILE HEADER ANALYSIS ===== -->
+<div class="tool-view" id="view-fileheader">
+  <div class="tool-header">
+    <div class="breadcrumb">Steganography / Forensics</div>
+    <h2>🔍 File Header Analysis</h2>
+  </div>
+  <div class="eli5-box">
+    <div class="eli5-title">How does this work? (Explain like I'm 5)</div>
+    <p>Every file starts with special "magic bytes" — like a name tag that says "I'm a PNG image!" or "I'm a ZIP file!" Sometimes in CTFs, sneaky people CHANGE the name tag to trick you. A file might say it's a .txt, but the magic bytes inside say it's actually a .png image! File header analysis reads these magic bytes to reveal the TRUE identity of any file.</p>
+    <div class="eli5-extra">Common magic bytes: PNG starts with "89 50 4E 47" (‰PNG), JPEG starts with "FF D8 FF," ZIP starts with "50 4B 03 04" (PK), PDF starts with "25 50 44 46" (%PDF). In CTFs, files often have wrong extensions or contain multiple embedded files!</div>
+  </div>
+  <div class="file-drop" id="fh-drop" onclick="document.getElementById('fh-file').click()">
+    <div class="fd-icon">🔍</div>
+    <p>Drop ANY file here to analyze its header and contents</p>
+    <input type="file" id="fh-file">
+  </div>
+  <div class="tool-controls">
+    <button class="btn btn-secondary" onclick="analyzeFile()">Analyze File</button>
+    <label>Hex dump bytes: <input type="number" id="fh-bytes" value="256" min="16" max="4096" style="width:80px"></label>
+  </div>
+  <div id="fh-results" style="display:none">
+    <div id="fh-info" class="result-box"></div>
+    <h3 style="color:var(--neon2);margin:15px 0 10px;font-size:.95em">Hex Dump</h3>
+    <div id="fh-hexdump" class="hexdump"></div>
+    <h3 style="color:var(--neon2);margin:15px 0 10px;font-size:.95em">Strings Found</h3>
+    <div id="fh-strings" class="result-box" style="max-height:300px;overflow-y:auto"></div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<script>
+// ===== NAVIGATION =====
+function showView(id){
+  document.querySelectorAll('.tool-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const view=document.getElementById('view-'+id);
+  if(view)view.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.onclick&&n.onclick.toString().includes("'"+id+"'"))n.classList.add('active');
+  });
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+// ===== UTILITY FUNCTIONS =====
+function copyText(id){
+  const el=document.getElementById(id);
+  navigator.clipboard.writeText(el.value).then(()=>{
+    const btn=el.parentElement.querySelector('.copy-btn');
+    if(btn){btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500)}
+  });
+}
+function swapFields(inId,outId){
+  const inp=document.getElementById(inId),out=document.getElementById(outId);
+  const tmp=inp.value;inp.value=out.value;out.value=tmp;
+}
+function clearFields(...ids){ids.forEach(id=>document.getElementById(id).value='')}
+
+// ===== BASE64 =====
+function b64Encode(){
+  try{document.getElementById('b64-output').value=btoa(unescape(encodeURIComponent(document.getElementById('b64-input').value)))}
+  catch(e){document.getElementById('b64-output').value='Error: '+e.message}
+}
+function b64Decode(){
+  try{document.getElementById('b64-output').value=decodeURIComponent(escape(atob(document.getElementById('b64-input').value.trim())))}
+  catch(e){document.getElementById('b64-output').value='Error: Invalid Base64 — '+e.message}
+}
+
+// ===== HEX =====
+function hexEncode(){
+  const sep=document.getElementById('hex-space').checked?' ':'';
+  document.getElementById('hex-output').value=[...new TextEncoder().encode(document.getElementById('hex-input').value)].map(b=>b.toString(16).padStart(2,'0')).join(sep);
+}
+function hexDecode(){
+  try{
+    const hex=document.getElementById('hex-input').value.replace(/[\s,;:0x]/gi,'');
+    if(hex.length%2!==0)throw new Error('Odd number of hex characters');
+    const bytes=[];for(let i=0;i<hex.length;i+=2)bytes.push(parseInt(hex.substr(i,2),16));
+    document.getElementById('hex-output').value=new TextDecoder().decode(new Uint8Array(bytes));
+  }catch(e){document.getElementById('hex-output').value='Error: '+e.message}
+}
+
+// ===== URL ENCODING =====
+function urlEncode(){document.getElementById('url-output').value=encodeURIComponent(document.getElementById('url-input').value)}
+function urlDecode(){
+  try{document.getElementById('url-output').value=decodeURIComponent(document.getElementById('url-input').value)}
+  catch(e){document.getElementById('url-output').value='Error: '+e.message}
+}
+
+// ===== BINARY =====
+function binEncode(){
+  document.getElementById('bin-output').value=[...new TextEncoder().encode(document.getElementById('bin-input').value)].map(b=>b.toString(2).padStart(8,'0')).join(' ');
+}
+function binDecode(){
+  try{
+    const bits=document.getElementById('bin-input').value.trim().split(/[\s,]+/);
+    document.getElementById('bin-output').value=new TextDecoder().decode(new Uint8Array(bits.map(b=>parseInt(b,2))));
+  }catch(e){document.getElementById('bin-output').value='Error: '+e.message}
+}
+
+// ===== ROT13 / ROT-N =====
+function rot(str,n){
+  return str.replace(/[a-zA-Z]/g,c=>{
+    const base=c<='Z'?65:97;
+    return String.fromCharCode((c.charCodeAt(0)-base+n)%26+base);
+  });
+}
+function rot13Apply(){document.getElementById('rot13-output').value=rot(document.getElementById('rot13-input').value,13)}
+function rotNApply(){document.getElementById('rot13-output').value=rot(document.getElementById('rot13-input').value,parseInt(document.getElementById('rot-n').value)||13)}
+
+// ===== ASCII =====
+function asciiEncode(){
+  const sep=document.getElementById('ascii-sep').value;
+  document.getElementById('ascii-output').value=[...document.getElementById('ascii-input').value].map(c=>c.charCodeAt(0)).join(sep==='\n'?'\n':sep);
+}
+function asciiDecode(){
+  try{
+    const nums=document.getElementById('ascii-input').value.trim().split(/[\s,]+/).map(Number);
+    document.getElementById('ascii-output').value=String.fromCharCode(...nums);
+  }catch(e){document.getElementById('ascii-output').value='Error: '+e.message}
+}
+
+// ===== MORSE CODE =====
+const MORSE={'A':'.-','B':'-...','C':'-.-.','D':'-..','E':'.','F':'..-.','G':'--.','H':'....','I':'..','J':'.---','K':'-.-','L':'.-..','M':'--','N':'-.','O':'---','P':'.--.','Q':'--.-','R':'.-.','S':'...','T':'-','U':'..-','V':'...-','W':'.--','X':'-..-','Y':'-.--','Z':'--..','0':'-----','1':'.----','2':'..---','3':'...--','4':'....-','5':'.....','6':'-....','7':'--...','8':'---..','9':'----.','.'  :'.-.-.-',',':'--..--','?':'..--..','!':'-.-.--','/':'-..-.','(':'-.--.',')':'-.--.-','&':'.-...',':':'---...',';':'-.-.-.','=':'-...-','+':'.-.-.','-':'-....-','_':'..--.-','"':'.-..-.','$':'...-..-','@':'.--.-.'};
+const MORSE_REV=Object.fromEntries(Object.entries(MORSE).map(([k,v])=>[v,k]));
+function morseEncode(){
+  document.getElementById('morse-output').value=document.getElementById('morse-input').value.toUpperCase().split('').map(c=>c===' '?' / ':MORSE[c]||c).join(' ');
+}
+function morseDecode(){
+  try{
+    document.getElementById('morse-output').value=document.getElementById('morse-input').value.trim().split(' / ').map(word=>word.split(' ').map(c=>MORSE_REV[c]||c).join('')).join(' ');
+  }catch(e){document.getElementById('morse-output').value='Error: '+e.message}
+}
+
+// ===== HTML ENTITIES =====
+function htmlentEncode(){
+  document.getElementById('htmlent-output').value=document.getElementById('htmlent-input').value.replace(/[\u00A0-\u9999<>&'"]/g,c=>'&#'+c.charCodeAt(0)+';');
+}
+function htmlentDecode(){
+  const el=document.createElement('textarea');
+  el.innerHTML=document.getElementById('htmlent-input').value;
+  document.getElementById('htmlent-output').value=el.value;
+}
+
+// ===== CAESAR CIPHER =====
+function caesarEncrypt(){
+  const shift=parseInt(document.getElementById('caesar-shift').value)||3;
+  document.getElementById('caesar-output').value=rot(document.getElementById('caesar-input').value,shift);
+}
+function caesarDecrypt(){
+  const shift=parseInt(document.getElementById('caesar-shift').value)||3;
+  document.getElementById('caesar-output').value=rot(document.getElementById('caesar-input').value,26-shift);
+}
+function caesarBrute(){
+  const input=document.getElementById('caesar-input').value;
+  const el=document.getElementById('caesar-brute-results');
+  el.style.display='block';
+  let html='<div style="font-size:.85em">';
+  for(let i=1;i<=25;i++){
+    html+=`<div style="margin:6px 0;padding:6px;border-bottom:1px solid var(--border)"><span class="tag tag-blue">ROT-${i}</span> ${rot(input,i).replace(/</g,'&lt;')}</div>`;
+  }
+  html+='</div>';el.innerHTML=html;
+}
+
+// ===== VIGENÈRE CIPHER =====
+function vigProcess(text,key,decrypt){
+  if(!key)return'Error: Please enter a key';
+  key=key.toUpperCase().replace(/[^A-Z]/g,'');
+  if(!key)return'Error: Key must contain letters';
+  let ki=0;
+  return text.replace(/[a-zA-Z]/g,c=>{
+    const base=c<='Z'?65:97;
+    const shift=key.charCodeAt(ki%key.length)-65;
+    ki++;
+    return String.fromCharCode((c.charCodeAt(0)-base+(decrypt?26-shift:shift))%26+base);
+  });
+}
+function vigEncrypt(){document.getElementById('vig-output').value=vigProcess(document.getElementById('vig-input').value,document.getElementById('vig-key').value,false)}
+function vigDecrypt(){document.getElementById('vig-output').value=vigProcess(document.getElementById('vig-input').value,document.getElementById('vig-key').value,true)}
+
+// ===== AES =====
+function aesEncrypt(){
+  const msg=document.getElementById('aes-input').value;
+  const key=document.getElementById('aes-key').value;
+  if(!key){document.getElementById('aes-output').value='Error: Please enter a password';return}
+  try{document.getElementById('aes-output').value=CryptoJS.AES.encrypt(msg,key).toString()}
+  catch(e){document.getElementById('aes-output').value='Error: '+e.message}
+}
+function aesDecrypt(){
+  const msg=document.getElementById('aes-input').value.trim();
+  const key=document.getElementById('aes-key').value;
+  if(!key){document.getElementById('aes-output').value='Error: Please enter a password';return}
+  try{
+    const bytes=CryptoJS.AES.decrypt(msg,key);
+    const result=bytes.toString(CryptoJS.enc.Utf8);
+    document.getElementById('aes-output').value=result||'Error: Wrong password or invalid data';
+  }catch(e){document.getElementById('aes-output').value='Error: Wrong password or invalid data'}
+}
+
+// ===== XOR CIPHER =====
+function xorApply(){
+  const input=document.getElementById('xor-input').value;
+  const key=document.getElementById('xor-key').value;
+  const mode=document.getElementById('xor-mode').value;
+  if(!key){document.getElementById('xor-output').value='Error: Please enter a key';return}
+  let inputBytes,keyBytes;
+  if(mode==='hex'){
+    const hex=input.replace(/[\s,;:0x]/gi,'');
+    inputBytes=[];for(let i=0;i<hex.length;i+=2)inputBytes.push(parseInt(hex.substr(i,2),16));
+  }else{
+    inputBytes=[...new TextEncoder().encode(input)];
+  }
+  keyBytes=[...new TextEncoder().encode(key)];
+  const result=inputBytes.map((b,i)=>b^keyBytes[i%keyBytes.length]);
+  if(mode==='hex'){
+    document.getElementById('xor-output').value=result.map(b=>b.toString(16).padStart(2,'0')).join(' ');
+  }else{
+    // Show both text and hex
+    const text=new TextDecoder('utf-8',{fatal:false}).decode(new Uint8Array(result));
+    const hex=result.map(b=>b.toString(16).padStart(2,'0')).join(' ');
+    document.getElementById('xor-output').value=`Text: ${text}\n\nHex: ${hex}`;
+  }
+}
+function xorBrute(){
+  const input=document.getElementById('xor-input').value;
+  const mode=document.getElementById('xor-mode').value;
+  let inputBytes;
+  if(mode==='hex'){
+    const hex=input.replace(/[\s,;:0x]/gi,'');
+    inputBytes=[];for(let i=0;i<hex.length;i+=2)inputBytes.push(parseInt(hex.substr(i,2),16));
+  }else{
+    inputBytes=[...new TextEncoder().encode(input)];
+  }
+  const el=document.getElementById('xor-brute-results');
+  el.style.display='block';
+  let html='<div style="font-size:.8em">';
+  for(let k=1;k<=255;k++){
+    const result=inputBytes.map(b=>b^k);
+    const text=result.map(b=>(b>=32&&b<127)?String.fromCharCode(b):'.').join('');
+    if(/[a-zA-Z]{3,}/.test(text)){
+      html+=`<div style="margin:4px 0;padding:4px;border-bottom:1px solid var(--border)"><span class="tag tag-green">Key: 0x${k.toString(16).padStart(2,'0')} (${k})</span> ${text.replace(/</g,'&lt;')}</div>`;
+    }
+  }
+  if(html==='<div style="font-size:.8em">')html+='<div style="padding:10px;color:var(--text2)">No results with readable text found. Try different input or hex mode.</div>';
+  html+='</div>';el.innerHTML=html;
+}
+
+// ===== RAIL FENCE =====
+function railEncrypt(){
+  const text=document.getElementById('rail-input').value;
+  const rails=parseInt(document.getElementById('rail-count').value)||3;
+  if(rails<2){document.getElementById('rail-output').value='Error: Need at least 2 rails';return}
+  const fence=Array.from({length:rails},()=>[]);
+  let rail=0,dir=1;
+  for(const c of text){
+    fence[rail].push(c);
+    if(rail===0)dir=1;
+    if(rail===rails-1)dir=-1;
+    rail+=dir;
+  }
+  document.getElementById('rail-output').value=fence.flat().join('');
+  // Show visual
+  showRailVisual(text,rails);
+}
+function railDecrypt(){
+  const text=document.getElementById('rail-input').value;
+  const rails=parseInt(document.getElementById('rail-count').value)||3;
+  if(rails<2){document.getElementById('rail-output').value='Error: Need at least 2 rails';return}
+  const n=text.length;
+  const fence=Array.from({length:rails},()=>Array(n).fill(''));
+  let rail=0,dir=1;
+  // Mark positions
+  const pattern=[];
+  for(let i=0;i<n;i++){
+    pattern.push(rail);
+    if(rail===0)dir=1;
+    if(rail===rails-1)dir=-1;
+    rail+=dir;
+  }
+  // Fill row by row
+  let idx=0;
+  for(let r=0;r<rails;r++){
+    for(let i=0;i<n;i++){
+      if(pattern[i]===r)fence[r][i]=text[idx++];
+    }
+  }
+  // Read zigzag
+  let result='';
+  for(let i=0;i<n;i++)result+=fence[pattern[i]][i];
+  document.getElementById('rail-output').value=result;
+}
+function showRailVisual(text,rails){
+  const el=document.getElementById('rail-visual');
+  el.style.display='block';
+  const fence=Array.from({length:rails},()=>Array(text.length).fill(' '));
+  let rail=0,dir=1;
+  for(let i=0;i<text.length;i++){
+    fence[rail][i]=text[i];
+    if(rail===0)dir=1;
+    if(rail===rails-1)dir=-1;
+    rail+=dir;
+  }
+  let html='<div style="font-size:.85em;color:var(--neon2);margin-bottom:8px">Rail Fence Pattern:</div><pre style="font-size:.8em;line-height:1.5;color:var(--neon)">';
+  for(let r=0;r<rails;r++){
+    html+=fence[r].map(c=>c===' '?'·':'<span style="color:var(--neon3)">'+c+'</span>').join(' ')+'\n';
+  }
+  html+='</pre>';el.innerHTML=html;
+}
+
+// ===== IMAGE LSB STEGANOGRAPHY =====
+let stegImageData=null;
+
+function showStegTab(tab){
+  document.querySelectorAll('#view-steg-lsb .tab-btn').forEach((b,i)=>b.classList.toggle('active',i===(tab==='hide'?0:1)));
+  document.getElementById('steg-hide-tab').style.display=tab==='hide'?'block':'none';
+  document.getElementById('steg-extract-tab').style.display=tab==='extract'?'block':'none';
+}
+
+// File handlers
+['steg-hide','steg-extract'].forEach(prefix=>{
+  const drop=document.getElementById(prefix+'-drop');
+  const file=document.getElementById(prefix+'-file');
+  const preview=document.getElementById(prefix+'-preview');
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover')});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));
+  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');handleStegFile(e.dataTransfer.files[0],prefix)});
+  file.addEventListener('change',e=>handleStegFile(e.target.files[0],prefix));
+});
+
+function handleStegFile(file,prefix){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.getElementById(prefix+'-preview').src=e.target.result;
+    document.getElementById(prefix+'-preview').style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function stegHide(){
+  const preview=document.getElementById('steg-hide-preview');
+  const msg=document.getElementById('steg-hide-msg').value;
+  if(!preview.src||preview.style.display==='none'){document.getElementById('steg-hide-status').textContent='Please upload an image first!';return}
+  if(!msg){document.getElementById('steg-hide-status').textContent='Please enter a message to hide!';return}
+  const canvas=document.getElementById('steg-hide-canvas');
+  const ctx=canvas.getContext('2d');
+  const img=new Image();
+  img.onload=()=>{
+    canvas.width=img.width;canvas.height=img.height;
+    ctx.drawImage(img,0,0);
+    const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const data=imageData.data;
+    // Encode message length (32 bits) + message
+    const msgBin=new TextEncoder().encode(msg);
+    const lenBits=msgBin.length.toString(2).padStart(32,'0');
+    const msgBits=[...msgBin].map(b=>b.toString(2).padStart(8,'0')).join('');
+    const allBits=lenBits+msgBits;
+    const maxBits=Math.floor(data.length/4)*3; // 3 bits per pixel (R,G,B)
+    if(allBits.length>maxBits){
+      document.getElementById('steg-hide-status').textContent=`Message too long! Max ~${Math.floor(maxBits/8-4)} characters for this image.`;return;
+    }
+    let bitIdx=0;
+    for(let i=0;i<data.length&&bitIdx<allBits.length;i++){
+      if(i%4===3)continue; // skip alpha
+      data[i]=(data[i]&0xFE)|parseInt(allBits[bitIdx],2);
+      bitIdx++;
+    }
+    ctx.putImageData(imageData,0,0);
+    canvas.style.display='block';
+    document.getElementById('steg-download-area').style.display='flex';
+    document.getElementById('steg-hide-status').textContent=`Success! Hidden ${msg.length} characters (${allBits.length} bits) in image.`;
+  };
+  img.src=preview.src;
+}
+
+function stegExtract(){
+  const preview=document.getElementById('steg-extract-preview');
+  if(!preview.src||preview.style.display==='none'){document.getElementById('steg-extract-result').style.display='block';document.getElementById('steg-extract-result').textContent='Please upload an image first!';return}
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  const img=new Image();
+  img.onload=()=>{
+    canvas.width=img.width;canvas.height=img.height;
+    ctx.drawImage(img,0,0);
+    const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+    let bits='';
+    for(let i=0;i<data.length;i++){
+      if(i%4===3)continue;
+      bits+=(data[i]&1).toString();
+    }
+    // Read length (first 32 bits)
+    const msgLen=parseInt(bits.substr(0,32),2);
+    if(msgLen<=0||msgLen>100000){
+      document.getElementById('steg-extract-result').style.display='block';
+      document.getElementById('steg-extract-result').innerHTML='<span style="color:var(--neon4)">No hidden message found (or not LSB encoded). The message length header reads: '+msgLen+'</span>';
+      return;
+    }
+    const msgBits=bits.substr(32,msgLen*8);
+    const bytes=[];
+    for(let i=0;i<msgBits.length;i+=8)bytes.push(parseInt(msgBits.substr(i,8),2));
+    const result=new TextDecoder().decode(new Uint8Array(bytes));
+    const el=document.getElementById('steg-extract-result');
+    el.style.display='block';
+    el.className='result-box success';
+    el.innerHTML=`<div style="color:var(--neon);margin-bottom:8px">Hidden message found (${msgLen} characters):</div><div style="background:var(--bg);padding:10px;border-radius:6px;word-break:break-all">${result.replace(/</g,'&lt;')}</div>`;
+  };
+  img.src=preview.src;
+}
+
+function stegDownload(){
+  const canvas=document.getElementById('steg-hide-canvas');
+  const link=document.createElement('a');
+  link.download='secret_image.png';
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+}
+
+// ===== TEXT STEGANOGRAPHY =====
+const ZWC=['\u200B','\u200C','\u200D']; // zero-width space, non-joiner, joiner
+
+function showTextStegTab(tab){
+  document.querySelectorAll('#view-steg-text .tab-btn').forEach((b,i)=>b.classList.toggle('active',i===(tab==='hide'?0:1)));
+  document.getElementById('textsteg-hide-tab').style.display=tab==='hide'?'block':'none';
+  document.getElementById('textsteg-extract-tab').style.display=tab==='extract'?'block':'none';
+}
+
+function textStegHide(){
+  const cover=document.getElementById('ts-cover').value;
+  const secret=document.getElementById('ts-secret').value;
+  if(!cover||!secret){document.getElementById('ts-result').value='Error: Please enter both cover text and secret message';return}
+  // Convert secret to binary, then to zero-width chars
+  const bits=[...new TextEncoder().encode(secret)].map(b=>b.toString(2).padStart(8,'0')).join('');
+  // Add length prefix
+  const lenBits=secret.length.toString(2).padStart(16,'0');
+  const allBits=lenBits+bits;
+  const zwcStr=allBits.split('').map(b=>b==='0'?ZWC[0]:ZWC[1]).join('')+ZWC[2]; // terminator
+  // Insert after first character of cover
+  document.getElementById('ts-result').value=cover[0]+zwcStr+cover.slice(1);
+}
+
+function textStegExtract(){
+  const input=document.getElementById('ts-extract-input').value;
+  const el=document.getElementById('ts-extract-result');
+  el.style.display='block';
+  // Find zero-width characters
+  const zwcRegex=/[\u200B\u200C\u200D]+/g;
+  const matches=input.match(zwcRegex);
+  if(!matches||matches.length===0){
+    el.className='result-box error';
+    el.textContent='No hidden zero-width characters found in this text.';
+    return;
+  }
+  const zwcAll=matches.join('');
+  // Decode
+  let bits='';
+  for(const c of zwcAll){
+    if(c===ZWC[0])bits+='0';
+    else if(c===ZWC[1])bits+='1';
+    else if(c===ZWC[2])break; // terminator
+  }
+  if(bits.length<16){el.className='result-box error';el.textContent='Found zero-width characters but could not decode a valid message.';return}
+  const msgLen=parseInt(bits.substr(0,16),2);
+  const msgBits=bits.substr(16,msgLen*8);
+  const bytes=[];
+  for(let i=0;i<msgBits.length;i+=8)bytes.push(parseInt(msgBits.substr(i,8),2));
+  try{
+    const result=new TextDecoder().decode(new Uint8Array(bytes));
+    el.className='result-box success';
+    el.innerHTML=`<div style="color:var(--neon);margin-bottom:8px">Hidden message found!</div><div style="background:var(--bg);padding:10px;border-radius:6px">${result.replace(/</g,'&lt;')}</div>`;
+  }catch(e){
+    el.className='result-box error';el.textContent='Found hidden data but could not decode as text.';
+  }
+}
+
+function textStegDetect(){
+  const input=document.getElementById('ts-extract-input').value;
+  const el=document.getElementById('ts-extract-result');
+  el.style.display='block';
+  let count=0;const found={};
+  for(const c of input){
+    const code=c.charCodeAt(0);
+    if(code===0x200B){count++;found['Zero-Width Space (U+200B)']=(found['Zero-Width Space (U+200B)']||0)+1}
+    else if(code===0x200C){count++;found['Zero-Width Non-Joiner (U+200C)']=(found['Zero-Width Non-Joiner (U+200C)']||0)+1}
+    else if(code===0x200D){count++;found['Zero-Width Joiner (U+200D)']=(found['Zero-Width Joiner (U+200D)']||0)+1}
+    else if(code===0xFEFF){count++;found['BOM (U+FEFF)']=(found['BOM (U+FEFF)']||0)+1}
+    else if(code===0x200E){count++;found['LTR Mark (U+200E)']=(found['LTR Mark (U+200E)']||0)+1}
+    else if(code===0x200F){count++;found['RTL Mark (U+200F)']=(found['RTL Mark (U+200F)']||0)+1}
+  }
+  if(count===0){
+    el.className='result-box';el.innerHTML='<span style="color:var(--neon4)">No hidden/invisible characters detected.</span>';
+  }else{
+    let html=`<div style="color:var(--neon);margin-bottom:8px">Found ${count} invisible characters!</div>`;
+    for(const[name,cnt]of Object.entries(found)){
+      html+=`<div style="margin:4px 0"><span class="tag tag-pink">${cnt}x</span> ${name}</div>`;
+    }
+    el.className='result-box success';el.innerHTML=html;
+  }
+}
+
+// ===== EXIF / METADATA =====
+const exifDrop=document.getElementById('exif-drop');
+const exifFile=document.getElementById('exif-file');
+exifDrop.addEventListener('dragover',e=>{e.preventDefault();exifDrop.classList.add('dragover')});
+exifDrop.addEventListener('dragleave',()=>exifDrop.classList.remove('dragover'));
+exifDrop.addEventListener('drop',e=>{e.preventDefault();exifDrop.classList.remove('dragover');exifFile.files=e.dataTransfer.files;handleExifPreview()});
+exifFile.addEventListener('change',handleExifPreview);
+
+function handleExifPreview(){
+  const file=exifFile.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{document.getElementById('exif-preview').src=e.target.result;document.getElementById('exif-preview').style.display='block'};
+  reader.readAsDataURL(file);
+}
+
+function readExif(){
+  const file=exifFile.files[0];
+  if(!file){alert('Please upload an image first');return}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const buf=new Uint8Array(e.target.result);
+    const tbody=document.getElementById('exif-table').querySelector('tbody');
+    tbody.innerHTML='';
+    const info=[
+      ['File Name',file.name],
+      ['File Size',formatSize(file.size)],
+      ['File Type',file.type||'Unknown'],
+      ['Last Modified',file.lastModified?new Date(file.lastModified).toLocaleString():'Unknown'],
+    ];
+    // Try to detect image dimensions
+    const img=new Image();
+    img.onload=()=>{
+      info.push(['Dimensions',img.width+' x '+img.height+' pixels']);
+      info.push(['Total Pixels',(img.width*img.height).toLocaleString()]);
+      // Check for JPEG EXIF
+      if(buf[0]===0xFF&&buf[1]===0xD8){
+        info.push(['Format','JPEG']);
+        const exifData=parseBasicExif(buf);
+        exifData.forEach(d=>info.push(d));
+      }else if(buf[0]===0x89&&buf[1]===0x50){
+        info.push(['Format','PNG']);
+        const pngData=parsePngChunks(buf);
+        pngData.forEach(d=>info.push(d));
+      }else if(buf[0]===0x47&&buf[1]===0x49){
+        info.push(['Format','GIF']);
+      }
+      // Check for strings in file (comments, etc)
+      const strings=extractStrings(buf,4);
+      if(strings.length>0){
+        info.push(['Embedded Strings','(see below)']);
+        const interestingStrings=strings.filter(s=>!s.match(/^[\x00-\x1f]+$/)).slice(0,30);
+        interestingStrings.forEach((s,i)=>info.push(['String #'+(i+1),s]));
+      }
+      info.forEach(([k,v])=>{
+        const row=tbody.insertRow();
+        row.insertCell(0).textContent=k;
+        row.insertCell(1).textContent=v;
+      });
+      document.getElementById('exif-results').style.display='block';
+    };
+    img.src=URL.createObjectURL(file);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseBasicExif(buf){
+  const results=[];
+  // Look for JFIF/EXIF markers
+  for(let i=0;i<Math.min(buf.length,100);i++){
+    if(buf[i]===0x4A&&buf[i+1]===0x46&&buf[i+2]===0x49&&buf[i+3]===0x46){
+      results.push(['JFIF','Yes']);break;
+    }
+    if(buf[i]===0x45&&buf[i+1]===0x78&&buf[i+2]===0x69&&buf[i+3]===0x66){
+      results.push(['EXIF Header','Found']);break;
+    }
+  }
+  // Look for common EXIF text fields
+  const text=new TextDecoder('ascii',{fatal:false}).decode(buf.slice(0,Math.min(buf.length,65536)));
+  const patterns=[
+    [/Adobe\s+\w+/,'Software'],
+    [/Photoshop/,'Software'],
+    [/GIMP/,'Software'],
+    [/(Canon|Nikon|Sony|Apple|Samsung|Google|Huawei)\s*[\w\s-]*/i,'Camera/Device'],
+    [/(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/,'DateTime'],
+  ];
+  patterns.forEach(([re,label])=>{
+    const m=text.match(re);
+    if(m)results.push([label,m[0].trim()]);
+  });
+  return results;
+}
+
+function parsePngChunks(buf){
+  const results=[];
+  let offset=8; // Skip PNG signature
+  while(offset<buf.length-8){
+    const len=(buf[offset]<<24|buf[offset+1]<<16|buf[offset+2]<<8|buf[offset+3])>>>0;
+    const type=String.fromCharCode(buf[offset+4],buf[offset+5],buf[offset+6],buf[offset+7]);
+    results.push(['PNG Chunk',`${type} (${len} bytes)`]);
+    if(type==='tEXt'||type==='iTXt'||type==='zTXt'){
+      const chunkData=new TextDecoder('ascii',{fatal:false}).decode(buf.slice(offset+8,offset+8+Math.min(len,500)));
+      results.push(['Text Chunk Content',chunkData]);
+    }
+    offset+=12+len;
+    if(type==='IEND')break;
+  }
+  return results;
+}
+
+// ===== FILE HEADER ANALYSIS =====
+const fhDrop=document.getElementById('fh-drop');
+const fhFile=document.getElementById('fh-file');
+fhDrop.addEventListener('dragover',e=>{e.preventDefault();fhDrop.classList.add('dragover')});
+fhDrop.addEventListener('dragleave',()=>fhDrop.classList.remove('dragover'));
+fhDrop.addEventListener('drop',e=>{e.preventDefault();fhDrop.classList.remove('dragover');fhFile.files=e.dataTransfer.files});
+fhFile.addEventListener('change',()=>{});
+
+const MAGIC_BYTES=[
+  {sig:[0x89,0x50,0x4E,0x47],name:'PNG Image',ext:'.png'},
+  {sig:[0xFF,0xD8,0xFF],name:'JPEG Image',ext:'.jpg'},
+  {sig:[0x47,0x49,0x46,0x38],name:'GIF Image',ext:'.gif'},
+  {sig:[0x42,0x4D],name:'BMP Image',ext:'.bmp'},
+  {sig:[0x50,0x4B,0x03,0x04],name:'ZIP Archive (or DOCX/XLSX/JAR)',ext:'.zip'},
+  {sig:[0x50,0x4B,0x05,0x06],name:'ZIP Archive (empty)',ext:'.zip'},
+  {sig:[0x52,0x61,0x72,0x21],name:'RAR Archive',ext:'.rar'},
+  {sig:[0x25,0x50,0x44,0x46],name:'PDF Document',ext:'.pdf'},
+  {sig:[0x7F,0x45,0x4C,0x46],name:'ELF Executable (Linux)',ext:''},
+  {sig:[0x4D,0x5A],name:'Windows Executable (PE/MZ)',ext:'.exe'},
+  {sig:[0x1F,0x8B],name:'GZIP Archive',ext:'.gz'},
+  {sig:[0x37,0x7A,0xBC,0xAF],name:'7-Zip Archive',ext:'.7z'},
+  {sig:[0x00,0x00,0x00,0x18,0x66,0x74,0x79,0x70],name:'MP4 Video',ext:'.mp4'},
+  {sig:[0x00,0x00,0x00,0x1C,0x66,0x74,0x79,0x70],name:'MP4 Video',ext:'.mp4'},
+  {sig:[0x49,0x44,0x33],name:'MP3 Audio (ID3)',ext:'.mp3'},
+  {sig:[0xFF,0xFB],name:'MP3 Audio',ext:'.mp3'},
+  {sig:[0x4F,0x67,0x67,0x53],name:'OGG Audio/Video',ext:'.ogg'},
+  {sig:[0x52,0x49,0x46,0x46],name:'RIFF (WAV/AVI)',ext:'.wav/.avi'},
+  {sig:[0x66,0x4C,0x61,0x43],name:'FLAC Audio',ext:'.flac'},
+  {sig:[0xCA,0xFE,0xBA,0xBE],name:'Java Class File',ext:'.class'},
+  {sig:[0x23,0x21],name:'Script (shebang)',ext:''},
+  {sig:[0xEF,0xBB,0xBF],name:'UTF-8 BOM Text',ext:'.txt'},
+  {sig:[0x53,0x51,0x4C,0x69,0x74,0x65],name:'SQLite Database',ext:'.db'},
+];
+
+function analyzeFile(){
+  const file=fhFile.files[0];
+  if(!file){alert('Please upload a file first');return}
+  const numBytes=parseInt(document.getElementById('fh-bytes').value)||256;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const buf=new Uint8Array(e.target.result);
+    // Detect file type
+    let detected='Unknown';
+    for(const m of MAGIC_BYTES){
+      let match=true;
+      for(let i=0;i<m.sig.length;i++){
+        if(buf[i]!==m.sig[i]){match=false;break}
+      }
+      if(match){detected=m.name+(m.ext?' ('+m.ext+')':'');break}
+    }
+    // File info
+    const infoEl=document.getElementById('fh-info');
+    infoEl.innerHTML=`
+      <div style="margin-bottom:8px"><span class="tag tag-green">File</span> ${file.name}</div>
+      <div style="margin-bottom:8px"><span class="tag tag-blue">Size</span> ${formatSize(file.size)}</div>
+      <div style="margin-bottom:8px"><span class="tag tag-blue">MIME</span> ${file.type||'Not detected'}</div>
+      <div style="margin-bottom:8px"><span class="tag tag-pink">Detected Type</span> ${detected}</div>
+      <div><span class="tag tag-green">Magic Bytes</span> ${[...buf.slice(0,8)].map(b=>b.toString(16).padStart(2,'0').toUpperCase()).join(' ')}</div>
+    `;
+    // Hex dump
+    const hexEl=document.getElementById('fh-hexdump');
+    let hexHtml='';
+    const bytesToShow=Math.min(numBytes,buf.length);
+    for(let i=0;i<bytesToShow;i+=16){
+      const offset='<span class="offset">'+i.toString(16).padStart(8,'0')+'</span>  ';
+      let hexPart='',asciiPart='';
+      for(let j=0;j<16;j++){
+        if(i+j<bytesToShow){
+          hexPart+='<span class="hex">'+buf[i+j].toString(16).padStart(2,'0')+'</span> ';
+          asciiPart+='<span class="ascii">'+(buf[i+j]>=32&&buf[i+j]<127?String.fromCharCode(buf[i+j]):'.')+'</span>';
+        }else{hexPart+='   ';asciiPart+=' '}
+        if(j===7)hexPart+=' ';
+      }
+      hexHtml+=offset+hexPart+' |'+asciiPart+'|\n';
+    }
+    hexEl.innerHTML=hexHtml;
+    // Extract strings
+    const strings=extractStrings(buf,4);
+    const strEl=document.getElementById('fh-strings');
+    if(strings.length>0){
+      strEl.innerHTML=strings.slice(0,100).map((s,i)=>`<div style="margin:2px 0;padding:2px 4px;border-bottom:1px solid var(--border);font-size:.85em"><span class="tag tag-blue">#${i+1}</span> ${s.replace(/</g,'&lt;')}</div>`).join('');
+    }else{
+      strEl.innerHTML='<span style="color:var(--text2)">No readable strings found.</span>';
+    }
+    document.getElementById('fh-results').style.display='block';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ===== HELPERS =====
+function formatSize(bytes){
+  if(bytes<1024)return bytes+' B';
+  if(bytes<1024*1024)return(bytes/1024).toFixed(1)+' KB';
+  return(bytes/(1024*1024)).toFixed(1)+' MB';
+}
+
+function extractStrings(buf,minLen){
+  const strings=[];let current='';
+  for(let i=0;i<buf.length;i++){
+    if(buf[i]>=32&&buf[i]<127){current+=String.fromCharCode(buf[i])}
+    else{if(current.length>=minLen)strings.push(current);current=''}
+  }
+  if(current.length>=minLen)strings.push(current);
+  return strings;
+}
+
+// ===== BACKGROUND ANIMATION =====
+(function(){
+  const c=document.createElement('canvas');
+  c.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1;opacity:.06';
+  document.body.appendChild(c);
+  const ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  const cols=Math.floor(c.width/14);
+  const drops=Array(cols).fill(1);
+  function draw(){
+    ctx.fillStyle='rgba(10,10,15,.05)';ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#00ff88';ctx.font='12px monospace';
+    for(let i=0;i<drops.length;i++){
+      const char=String.fromCharCode(0x30+Math.random()*94);
+      ctx.fillText(char,i*14,drops[i]*14);
+      if(drops[i]*14>c.height&&Math.random()>.975)drops[i]=0;
+      drops[i]++;
+    }
+  }
+  setInterval(draw,50);
+})();
+</script>
+</body>
+</html>
